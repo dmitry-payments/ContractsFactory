@@ -1,41 +1,42 @@
 const chai = require('chai');
 const { expect } = chai;
 const BN = require('bn.js');
-const { ContractFactory } = require('ethers');
-const FACTORY = artifacts.require("./ContractsFactory.sol");
-const ERC20TOKEN = artifacts.require("./ERC20.sol");
-const ERC721TOKEN = artifacts.require("./ERC721.sol");
+const FACTORY = artifacts.require("./Factory.sol");
+const ERC20TOKEN = artifacts.require("./ERC20Token.sol");
+const ERC721TOKEN = artifacts.require("./ERC721Token.sol");
 
 chai.use(require('chai-bn')(BN));
 
-contract('ContractsFactory', function (accounts) { //accounts - адреса задепллоенных кошельков которые создаст hardhat для тестирования
-  const [owner, account1, account2] = accounts; //const owner = accounts[0];
+contract("Factory", async accounts => {
+  let Factory;
+  let ERC20Token;
+  let ERC721Token;
 
-  before(async function () { 
-    this.token = await FACTORY.new("DESU", "DESU", { from: owner });
-    this.ERC20Token = await ERC20TOKEN.new("DESU", "DESU", { from: owner });
-    this.ERC721Token = await ERC721TOKEN.new("DESU", "DESU", { from: owner }); 
-});
-
-describe('method: deployNewERC20Token', async function () {  
-    it('positive', async function() {
-      ERC20address = await this.token.deployNewERC20Token(
-        "Demo ERC20Token",
-        "DEMO20"
-      );
-      console.log(ERC20address);
-    });
-});
-
-describe('method: DeployNewERC721Token', async function () {  
-  it('positive', async function() {
-    ERC721address = await this.token.deployNewERC721Token(
-      "Demo ERC20Token",
-      "DEMO20"
-    );
-    console.log(ERC721address);
+  before("Create new instance of factory contract", async () => {
+    Factory = await FACTORY.deployed();
   });
-});
+
+  it("Should use factory to deploy new ERC20 token", async () => {
+    ERC20Token = await Factory.deployNewERC20Token(
+      "Demo Token",
+      "DEMO20",
+      18,
+      new BN('1'),
+    );
+    const TokenInstance = await ERC20TOKEN.at(ERC20Token.logs[0].args.tokenAddress);
+    const balance = await TokenInstance.balanceOf.call(accounts[0]);
+    expect(balance).to.be.a.bignumber.that.equals('1000000000000000000')
+  });
+
+  it("Should use factory to deploy new ERC721 token", async () => {
+    ERC721Token = await Factory.deployNewERC721Token(
+      "Demo ERC721 Token",
+      "DEMO721"
+    );
+    const TokenInstance = await ERC721TOKEN.at(ERC721Token.logs[0].args.tokenAddress);
+    const symbol = await TokenInstance.symbol.call();
+    expect(symbol).to.equal("DEMO721")
+  });
 
   it("Should mint a new ERC721 item", async () => {
     const TokenInstance = await ERC721TOKEN.at(ERC721Token.logs[0].args.tokenAddress);
@@ -50,5 +51,3 @@ describe('method: DeployNewERC721Token', async function () {
     expect(tokenUri).to.equal(uri);
   });
 });
-
-  

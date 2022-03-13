@@ -2,8 +2,6 @@ pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 
 contract ContractsFactory {
@@ -11,12 +9,17 @@ contract ContractsFactory {
     event DeployNewERC721Token(address tokenAddress);
 
     function deployNewERC20Token(
-        string memory name,
-        string memory symbol
+        string calldata name,
+        string calldata symbol,
+        uint8 decimals,
+        uint256 initialSupply
     ) public returns (address) {
-        IERC20 t = new ERC20(
+        ERC20Token t = new ERC20Token(
             name,
-            symbol
+            symbol,
+            decimals,
+            initialSupply,
+            msg.sender
         );
         emit DeployNewERC20Token(address(t));
     
@@ -26,7 +29,7 @@ contract ContractsFactory {
     function deployNewERC721Token(string memory name, string memory symbol)
         public returns (address)
     {
-        IERC721 t = new ERC721(name, symbol);
+        ERC721Token t = new ERC721Token(name, symbol);
         emit DeployNewERC721Token(address(t));
 
         return address(t);
